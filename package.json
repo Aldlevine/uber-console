@@ -2,8 +2,12 @@
   "name": "uber-console",
   "version": "0.0.1",
   "description": "A Node.js console on steroids, built in electron.",
-  "main": "main.js",
+  "main": "src/main.js",
+  "bin": {
+    "uber": "bin/uber.js"
+  },
   "scripts": {
+    "start": "node_modules/.bin/electron .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,7 +24,9 @@
   },
   "homepage": "https://github.com/Aldlevine/uber-console#readme",
   "dependencies": {
-    "codemirror": "^5.11.0",
-    "electron-prebuilt": "^0.36.7"
+    "acorn": "^3.0.2",
+    "electron-prebuilt": "^0.36.7",
+    "lodash": "^4.3.0",
+    "yargs": "^3.32.0"
   }
 }

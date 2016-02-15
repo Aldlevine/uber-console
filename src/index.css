@@ -1,0 +1,81 @@
+html, body
+{
+  background: #1C1D21;
+  color: #CBCDD2;
+  font-family: Consolas, monaco, monospace;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+#stdout
+{
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#stdout > div
+{
+  padding-left: 1rem;
+  box-sizing: border-box;
+}
+
+#stdout > div:before
+{
+  content: '<';
+  left: 0;
+  position: absolute;
+  color: gray;
+}
+
+#stdout > div[data-type="command"]:before
+{
+  content: '>';
+  color: teal;
+}
+
+#stdin
+{
+  position: relative;
+  bottom: 0 ;
+  left: 0;
+  display: inline-block;;
+  width: 100%;
+  min-height: 1em;
+  border-top: solid 2px #333;
+  padding-left: 1rem;
+  box-sizing: border-box;
+}
+
+#stdin:focus
+{
+  outline: none;
+}
+
+#stdin:before
+{
+  content: '>';
+  left: 0;
+  position: absolute;
+}
+
+[data-type="regexp"], [data-type="null"], [data-type="undefined"], [data-type="buffer"], [data-type="boolean"]
+{
+  color: orange;
+}
+
+[data-type="number"]
+{
+  color: blue;
+}
+
+[data-type="string"]
+{
+  color: green;
+}
+
+[data-error="true"]
+{
+  color: red;
+}
