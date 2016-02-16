@@ -3,6 +3,7 @@
 const electron = require('electron');
 const ipc = electron.ipcRenderer;
 const IO = require('./io');
+const command = require('./command').command;
 
 
 var stdout = null
@@ -10,22 +11,16 @@ var stdout = null
   , io = null
 ;
 
-/*function write(...args)
+function receive(err, ret)
 {
-  args.forEach(function(arg){
-    if( typeof arg === 'object' )
-      stdout.innerHTML += JSON.stringify(arg);
-    else
-      stdout.innerHTML += arg;
-    stdout.innerHTML += ' ';
-  });
-  stdout.innerHTML += '<br>';
-}*/
+  if(err) io.error(err);
+  else io.log(ret);
+}
 
 function send(content)
 {
   stdin.innerHTML = '';
-  ipc.send('console#command', content);
+  command(content, receive);
 }
 
 window.addEventListener('load', function(){
@@ -34,7 +29,7 @@ window.addEventListener('load', function(){
   io = new IO;
 
   ipc.on('console#log', function(event, ...args){
-    io.log(...args);
+    io.console_log(...args);
   });
 
   ipc.on('console#error', function(event, ...args){

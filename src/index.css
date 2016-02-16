@@ -43,7 +43,6 @@ html, body
   display: inline-block;;
   width: 100%;
   min-height: 1em;
-  border-top: solid 2px #333;
   padding-left: 1rem;
   box-sizing: border-box;
 }
@@ -58,6 +57,16 @@ html, body
   content: '>';
   left: 0;
   position: absolute;
+}
+
+[data-type="key"]
+{
+  margin-left: 1rem;
+}
+[data-type="key"] > div
+{
+  display: inline-block;
+  vertical-align: top;
 }
 
 [data-type="regexp"], [data-type="null"], [data-type="undefined"], [data-type="buffer"], [data-type="boolean"]
