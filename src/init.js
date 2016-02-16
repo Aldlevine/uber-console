@@ -8,7 +8,15 @@ const electron = require('electron-prebuilt');
 var cwd = __dirname.split('/');
 cwd.pop();
 cwd = cwd.join('/');
-var child = child_process.spawn(electron, ['.', process.cwd()], {cwd: cwd, detached: true, stdio: 'pipe'});
+var child = child_process.spawn(electron, [__dirname+'/main.js', process.cwd()], {cwd: process.cwd()});
+
+child.stderr.on('data', function(data){
+  console.error(data.toString());
+});
+
+child.stdout.on('data', function(data){
+  console.log(data.toString());
+})
 
 process.on('exit', function(){
   child.kill();

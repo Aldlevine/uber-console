@@ -1,16 +1,21 @@
 const vm = require('vm');
 const remote = require('electron').remote;
 const Console = require('./console');
+const Module = require('module');
+const resolve = require('resolve');
+const _ = require('lodash');
 
-const _global = remote.getGlobal('global');
-window.__rootpath = global.__rootpath;
+const _global = {};
+for(var key in global) _global[key] = global[key];
 
-var context = vm.createContext({
-  require: require,
-  process: remote.process,
-  console: new Console(),
-  global: remote.getGlobal('global')
-});
+_global.require = function(path){
+  return require(resolve.sync(path, {basedir: global.__rootpath}));
+};
+_global.process = remote.process;
+_global.console = Console;
+_global.global = _global;
+
+var context = vm.createContext(_global);
 
 module.exports = function (content, done)
 {
@@ -19,10 +24,7 @@ module.exports = function (content, done)
   ;
   try
   {
-    process.chdir(global.__rootpath);
-    vm.runInContext(`process.chdir('${global.__rootpath}')`, context);
-    ret = vm.runInContext(content, context, {displayErrors: false});
-    process.chdir(cwd);
+    ret = vm.runInContext(content, context, {filename: `${global.__rootpath}/VM`, displayErrors: false});
     done(null, ret);
   }
   catch(err)

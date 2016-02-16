@@ -8,9 +8,7 @@ const vm = require('vm');
 const _ = require('lodash');
 const __rootpath = process.argv[2] || process.cwd();
 
-
 global.__rootpath = __rootpath;
-
 
 var mainWindow = null
   , console_ready = false
