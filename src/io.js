@@ -43,6 +43,8 @@ IO.prototype.error = function (...args) {
   args.forEach(function(arg){
     if( arg.type && arg.message )
       self.writePrimitive( `[${arg.type}: ${arg.message}]`, 'string', true );
+      if( arg.stack )
+        self.writePrimitive( arg.stack, 'stack', true );
     else
       self.writePrimitive( `[${arg}]`, 'string', true );
   });
