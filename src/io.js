@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const command = require('./command');
 
 var IO = module.exports = function()
 {
@@ -6,39 +7,17 @@ var IO = module.exports = function()
   this.stdin = document.querySelector('#stdin');
 }
 
-IO.prototype.console_log = function(...args)
+IO.prototype.receive = function (err, value)
 {
-  var self = this;
-  args.forEach(function(arg){
-    var type = arg.type
-      , data = arg.data
-      , string = arg.string
-    ;
-    switch(type)
-    {
-      case 'null':
-        self.writePrimitive('null', 'null'); break;
-      case 'undefined':
-        self.writePrimitive('undefined', 'undefined'); break;
-      case 'boolean':
-        self.writePrimitive(string, 'boolean'); break;
-      case 'number':
-        self.writePrimitive(data, 'number'); break;
-      case 'regexp':
-        self.writePrimitive(string, 'regexp'); break;
-      case 'string':
-        self.writePrimitive(data, 'string'); break;
-      case 'function':
-        self.writeFunction(string); break;
-      case 'buffer':
-        self.writeBuffer(data); break;
-      case 'array':
-        self.writeArray(data); break;
-      case 'object':
-        self.writeObject(data); break;
-      default:
-        self.writePrimitive(data, 'string');
-    }
+  if(err) this.error(err);
+  else this.log(value);
+}
+
+IO.prototype.send = function (content)
+{
+  stdin.innerHTML = '';
+  command(content, function(...args){
+    io.receive.call(io, ...args);
   });
 }
 
@@ -56,6 +35,24 @@ IO.prototype.log = function (...args) {
     else if( _.isArray(arg) ) self.writeArray(arg);
     else if( _.isObject(arg) ) self.writeObject(arg);
   });
+  window.scrollTo(0, document.body.scrollHeight);
+};
+
+IO.prototype.error = function (...args) {
+  var self = this;
+  args.forEach(function(arg){
+    if( arg.type && arg.message )
+      self.writePrimitive( `[${arg.type}: ${arg.message}]`, 'string', true );
+    else
+      self.writePrimitive( `[${arg}]`, 'string', true );
+  });
+  window.scrollTo(0, document.body.scrollHeight);
+};
+
+IO.prototype.command = function (command) {
+  var out = `<div data-type="command" data-error="false">${command}</div>`;
+  stdout.innerHTML += out;
+  window.scrollTo(0, document.body.scrollHeight);
 };
 
 IO.prototype.primitive = function (arg, type, isErr) {
@@ -94,10 +91,10 @@ IO.prototype.writeBuffer = function (arg) {
 };
 
 IO.prototype.array = function (arg) {
-
+  return this.object(arg);
 };
 IO.prototype.writeArray = function (arg) {
-  console.log(arg);
+  return this.writeObject(arg);
 };
 
 IO.prototype.object = function (arg) {
@@ -105,20 +102,19 @@ IO.prototype.object = function (arg) {
   var object_div = document.createElement('div');
   object_div.setAttribute('data-type', 'object');
   object_div.setAttribute('data-error', false);
-  object_div.innerHTML = `${arg.constructor.name} {}`;
+  object_div.innerHTML = `${arg.constructor.name || 'Object'} {}`;
 
   (function(arg){
     function expand(e)
     {
       e.stopPropagation();
       e.stopImmediatePropagation();
-      object_div.innerHTML = `${arg.constructor.name}`;
+      object_div.innerHTML = `${arg.constructor.name || 'Object'} {}`;
       for( var key in arg )
       {
         var value = arg[key]
           , item = null
         ;
-        console.log(value);
         if( _.isNull(value) ) item = self.primitive('null', 'null');
         else if( _.isUndefined(value) ) item = self.primitive('undefined', 'undefined');
         else if( _.isBoolean(value) ) item = self.primitive(value, 'boolean');
@@ -142,19 +138,4 @@ IO.prototype.object = function (arg) {
 };
 IO.prototype.writeObject = function (arg) {
   stdout.appendChild( this.object(arg) );
-};
-
-IO.prototype.error = function (...args) {
-  var self = this;
-  args.forEach(function(arg){
-    if( arg.type && arg.message )
-      self.writePrimitive( `[${arg.type}: ${arg.message}]`, 'string', true );
-    else
-      self.writePrimitive( `[${arg}]`, 'string', true );
-  });
-};
-
-IO.prototype.command = function (command) {
-  var out = `<div data-type="command" data-error="false">${command}</div>`;
-  stdout.innerHTML += out;
 };

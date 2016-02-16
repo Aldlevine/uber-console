@@ -9,39 +9,15 @@ const _ = require('lodash');
 const __rootpath = process.argv[2] || process.cwd();
 
 
+global.__rootpath = __rootpath;
+
+
 var mainWindow = null
   , console_ready = false
   , console_cache = []
   , console_log
   , console_error
 ;
-
-
-function getType(value)
-{
-  if( _.isNull(value) ) return 'null';
-  else if( _.isUndefined(value) ) return 'undefined';
-  else if( _.isBoolean(value) ) return 'boolean';
-  else if( _.isNumber(value) ) return 'number';
-  else if( _.isRegExp(value) ) return 'regexp';
-  else if( _.isString(value) ) return 'string';
-  else if( _.isFunction(value) ) return 'function';
-  else if( _.isBuffer(value) ) return 'buffer';
-  else if( _.isArray(value) ) return 'array';
-  else if( _.isObject(value) ) return 'object';
-}
-
-function log(...args)
-{
-  args.forEach(function(arg, i){
-    args[i] = {};
-    args[i].type = getType(arg);
-    args[i].data = arg;
-    if(arg !== null && arg !== undefined) args[i].string = arg.toString();
-  });
-
-  mainWindow.webContents.send('console#log', ...args);
-}
 
 
 app.on('window-all-closed', function(){
@@ -56,57 +32,7 @@ app.on('ready', function(){
 });
 
 
-ipc.on('console#ready', function(){
-  flush_cache();
-});
-
-
-console_log = console.log;
-console.log = function(...args)
-{
-  if( console_ready )
-  {
-    log(...args);
-  }
-  else
-  {
-    console_cache.push({verb:'log', args:[...args]});
-  }
-}
-
-
-console_error = console.error;
-console.error = function(...args)
-{
-  args.forEach(function(arg, i){
-    if( arg.message )
-    {
-      args[i] = {type: arg.constructor.name, message: arg.message, stack: arg.stack};
-    }
-    else
-    {
-      args[i] = {type: 'Error', message: arg, stack: null};
-    }
-  });
-
-  if( console_ready )
-  {
-    mainWindow.webContents.send('console#error', ...args);
-  }
-  else
-  {
-    console_cache.push({verb:'error', args: [...args]});
-  }
-}
-
-
-function flush_cache()
-{
-  var item = null;
-  while( item = console_cache.shift() )
-  {
-    mainWindow.webContents.send(`console#${item.verb}`, ...item.args);
-  }
-  if( console_cache.length == 0 ) console_ready = true;
-  else flush_cache();
-}
+var stdout_write = process.stdout.write;
+process.stdout.write = function(data){
+  mainWindow.webContents.executeJavaScript(`io.receive(null, \`${data.toString()}\` )`);
+};
