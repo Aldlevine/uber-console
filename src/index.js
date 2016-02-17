@@ -4,15 +4,19 @@ const electron = require('electron');
 const ipc = electron.ipcRenderer;
 const IO = require('./io');
 
+require('./menu');
 
 var stdout = null
   , stdin = null
   , io = null
   , shouldShowCommandHistory = false
-  , commandHistory = []
-  , commandHistoryIndex = 0
+  , commandHistory = JSON.parse(localStorage.getItem('commandHistory')) || []
+  , commandHistoryIndex = commandHistory.length - 1
 ;
 
+window.addEventListener('unload', function(){
+  localStorage.setItem('commandHistory', JSON.stringify(commandHistory));
+});
 
 function getCaretOffset(element)
 {
@@ -24,6 +28,44 @@ function getCaretOffset(element)
   return preCaretRange.toString().length;
 }
 
+function getLineHeight(element){
+   var temp = document.createElement(element.nodeName);
+   temp.setAttribute("style","margin:0px;padding:0px;font-family:"+element.style.fontFamily+";font-size:"+element.style.fontSize);
+   temp.innerHTML = "test";
+   temp = element.parentNode.appendChild(temp);
+   var ret = temp.clientHeight;
+   temp.parentNode.removeChild(temp);
+   return ret;
+}
+
+function isCaretAtTop()
+{
+  var selection = window.getSelection()
+    , range = selection.getRangeAt(0)
+    , span = document.createElement('span')
+  ;
+  if(!range.collapsed) return false;
+  span.style.display = 'inline-block';
+  range.insertNode(span);
+  var distanceFromTop = span.getBoundingClientRect().top - stdin.getBoundingClientRect().top;
+  span.remove();
+  return getLineHeight(stdin) > distanceFromTop;
+}
+
+function isCaretAtBottom()
+{
+  var selection = window.getSelection()
+    , range = selection.getRangeAt(0)
+    , span = document.createElement('span')
+  ;
+  if(!range.collapsed) return false;
+  span.style.display = 'inline-block';
+  range.insertNode(span);
+  var distanceFromBottom = stdin.getBoundingClientRect().bottom - span.getBoundingClientRect().bottom;
+  span.remove();
+  return getLineHeight(stdin) > distanceFromBottom;
+}
+
 window.addEventListener('load', function(){
 
   stdout = document.querySelector('#stdout');
@@ -31,15 +73,31 @@ window.addEventListener('load', function(){
   io = new IO;
 
   stdin.addEventListener('keydown', function(e){
-
-    if( e.which == 38 && !e.shiftKey && getCaretOffset(stdin) == 0)
+    if( e.which == 38 && !e.shiftKey && isCaretAtTop() )
     {
-      shouldShowCommandHistory = true;
+      if( commandHistoryIndex >= 0)
+      {
+        stdin.innerText = commandHistory[commandHistoryIndex--];
+        var selection = window.getSelection();
+        selection.selectAllChildren(stdin);
+        selection.collapseToEnd();
+      }
+      shouldShowCommandHistory = false;
     }
 
-    if( e.which == 40 && !e.shiftKey && getCaretOffset(stdin) == stdin.innerText.replace(/\n/g, '').length )
+    if( e.which == 40 && !e.shiftKey && isCaretAtBottom() )
     {
-      shouldShowCommandHistory = true;
+      if( commandHistoryIndex < commandHistory.length - 1 )
+      {
+        commandHistoryIndex++;
+        stdin.innerText = commandHistory[commandHistoryIndex];
+        var selection = window.getSelection();
+        selection.selectAllChildren(stdin);
+        selection.collapseToEnd();
+      }
+      else
+        stdin.innerText = '';
+      shouldShowCommandHistory = false;
     }
   });
 
@@ -55,30 +113,15 @@ window.addEventListener('load', function(){
       io.command(content);
       io.send(content);
 
-      commandHistory.push(content);
+      if( commandHistory[commandHistory.length - 1] != content )
+        commandHistory.push(content);
       commandHistoryIndex = commandHistory.length - 1;
     }
-
-    if( e.which == 38 && !e.shiftKey && shouldShowCommandHistory )
-    {
-      if( commandHistoryIndex >= 0)
-        stdin.innerText = commandHistory[commandHistoryIndex--];
-      shouldShowCommandHistory = false;
-    }
-
-    if( e.which == 40 && !e.shiftKey && shouldShowCommandHistory )
-    {
-      if( commandHistoryIndex < commandHistory.length - 1 )
-        stdin.innerText = commandHistory[++commandHistoryIndex];
-      else
-        stdin.innerText = '';
-      shouldShowCommandHistory = false;
-    }
-
   });
 
-  ipc.on('data', function(e, data){
-    console.log(data);
+
+  document.body.addEventListener('click', function(){
+    stdin.focus();
   });
 
 });

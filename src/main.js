@@ -7,6 +7,9 @@ const ipc = electron.ipcMain;
 const vm = require('vm');
 const _ = require('lodash');
 const __rootpath = process.argv[2] || process.cwd();
+const Menu = electron.Menu;
+
+Menu.setApplicationMenu(Menu.buildFromTemplate([]));
 
 global.__rootpath = __rootpath;
 
