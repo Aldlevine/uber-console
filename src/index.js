@@ -1,7 +1,6 @@
 'use strict';
 
 const electron = require('electron');
-const ipc = electron.ipcRenderer;
 const IO = require('./io');
 
 require('./menu');
@@ -10,7 +9,7 @@ var stdout = null
   , stdin = null
   , io = null
   , shouldShowCommandHistory = false
-  , commandHistory = JSON.parse(localStorage.getItem('commandHistory')) || []
+  , commandHistory = localStorage.getItem('commandHistory') ? JSON.parse(localStorage.getItem('commandHistory')) : []
   , commandHistoryIndex = commandHistory.length - 1
 ;
 
@@ -67,7 +66,7 @@ function isCaretAtBottom()
 }
 
 window.addEventListener('load', function(){
-
+  
   stdout = document.querySelector('#stdout');
   stdin = document.querySelector('#stdin');
   io = new IO;
@@ -120,8 +119,17 @@ window.addEventListener('load', function(){
   });
 
 
-  document.body.addEventListener('click', function(){
-    stdin.focus();
+  window.addEventListener('click', function(){
+    var selection = window.getSelection();
+    if(selection.isCollapsed)
+      stdin.focus();
+  }, true);
+
+
+  stdin.addEventListener('paste', function(e){
+    e.preventDefault();
+    var text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
   });
 
 });

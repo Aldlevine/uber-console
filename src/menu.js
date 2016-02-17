@@ -1,8 +1,10 @@
 const remote = require('electron').remote;
 const Menu = remote.Menu;
+const uber = new (require('./uber'));
 
 var template = [];
 
+// Edit
 var edit; template.push(edit = {
   label: 'Edit',
   submenu: []
@@ -11,16 +13,27 @@ var edit; template.push(edit = {
 edit.submenu.push({
   label: 'Clear Console',
   click: function(){
-    stdout.innerHTML = '';
+    uber.clear();
   }
 });
 
 edit.submenu.push({
   label: 'Clear History',
   click: function(){
-    localStorage.setItem('commandHistory', '');
-    commandHistory = [];
-    commandHistoryIndex = -1;
+    uber.clearHistory();
+  }
+});
+
+// View
+var view; template.push(view = {
+  label: 'View',
+  submenu: []
+});
+
+view.submenu.push({
+  label: 'Dev Tools',
+  click: function(){
+    remote.getCurrentWindow().openDevTools();
   }
 });
 
